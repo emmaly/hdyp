@@ -1,0 +1,13 @@
+<html>
+<head>
+  <title>How do you pronounce{{with .word}} {{.Word}}{{end}}?</title>
+  <link rel="stylesheet" href="/main.css" />
+  <script src="https://ajax.googleapis.com/ajax/libs/jquery/2.1.4/jquery.min.js"></script>
+  <script src="/main.js"></script>
+</head>
+<body>
+<h1 id="header">
+  <span>How do you pronounce</span>
+  <input id="word" value="{{.word.Word}}" {{if .noautofocus}}noautofocus="true"{{end}}/>
+  <span>?</span>
+</h1>

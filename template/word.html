@@ -1,0 +1,26 @@
+{{template "header.html" .}}
+<h2>{{.word.Word}}</h2>
+{{range .word.Pronunciations}}
+<div class="pronunciation-block">
+  <div class="rating">{{.Rating}}<span class="smallpercent">%</span></div>
+  <div class="pronunciation">{{.Pronunciation}}</div>
+  <div class="ipa">{{.IPA}}</div>
+  <div class="description">{{.Description}}</div>
+  <div class="sources">
+    <ul>
+      {{range .Sources}}
+      <li>
+        {{if .URL}}<a href="{{.URL}}">{{.URL}}</a>{{end}}
+        {{if and .URL .Description}}&mdash;{{end}}
+        {{if .Description}}{{.Description}}{{end}}
+      </li>
+      {{else}}
+      <li>[There are no sources]</li>
+      {{end}}
+    </ul>
+  </div>
+</div>
+{{else}}
+<p>There are no pronunciations for this word, yet.</p>
+{{end}}
+{{template "footer.html" .}}

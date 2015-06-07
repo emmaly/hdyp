@@ -1,0 +1,54 @@
+*
+{
+  font-family: monospace;
+}
+
+#header input#word {
+  height: 36px;
+  font-size: 28px;
+  border: 1px dashed lightgrey;
+  border-bottom: 2px solid black;
+}
+
+#header input#word:focus {
+  background-color: yellow;
+}
+
+.pronunciation-block {
+  margin: 10px;
+  padding: 10px;
+  border: 1px solid #F0F0F0;
+  background-color: #F9F9F9;
+}
+
+.pronunciation-block .rating {
+  float: left;
+  font-size: 32px;
+  margin-right: 10px;
+}
+
+.pronunciation-block .pronunciation {
+  font-weight: bold;
+}
+
+.pronunciation-block .ipa {
+  font-style: italic;
+}
+
+.pronunciation-block .description {
+}
+
+div#footer
+{
+  position: fixed;
+  bottom: 0;
+  left: 0;
+  background-color: white;
+  font-size: small;
+  padding: 1px;
+}
+
+.smallpercent {
+  font-size: 0.5em;
+  vertical-align: super;
+}
