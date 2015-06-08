@@ -16,19 +16,63 @@
   background-color: yellow;
 }
 
+img.svg
+{
+  display: none;
+}
+
 .pronunciation-block
 {
+  position: relative;
+  height: auto;
   margin: 10px;
-  padding: 10px;
-  border: 1px solid #F0F0F0;
+  padding: 10px 10px 10px 80px;
+  border: 1px solid #D0D0D0;
   background-color: #F9F9F9;
+  min-height: 200px;
+}
+
+.pronunciation-block .leftbar
+{
+  position: absolute;
+  left: 10px;
+  width: 60px;
+  overflow: hidden;
+  margin-right: 10px;
 }
 
 .pronunciation-block .rating
 {
-  float: left;
+  text-align: center;
   font-size: 32px;
-  margin-right: 10px;
+  margin-bottom: 8px;
+}
+
+.pronunciation-block .vote
+{
+  text-align: center;
+}
+
+.pronunciation-block .vote svg
+{
+  height: 50%;
+  width: 50%;
+  cursor: pointer;
+}
+
+.pronunciation-block .vote svg path
+{
+  fill: lightgrey;
+}
+
+.pronunciation-block .vote svg.selected path
+{
+  fill: black;
+}
+
+.pronunciation-block .vote svg:hover path
+{
+  fill: red;
 }
 
 .pronunciation-block .pronunciation

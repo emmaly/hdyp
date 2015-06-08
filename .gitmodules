@@ -1,0 +1,3 @@
+[submodule "www/vendor/open-iconic"]
+	path = www/vendor/open-iconic
+	url = git@github.com:iconic/open-iconic.git

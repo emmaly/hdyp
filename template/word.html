@@ -2,7 +2,14 @@
 <h2>{{.word.Word}}</h2>
 {{range .word.Pronunciations}}
 <div class="pronunciation-block">
-  <div class="rating">{{.Rating}}<span class="smallpercent">%</span></div>
+  <div class="leftbar">
+    <div class="rating">{{.Rating}}<span class="smallpercent">%</span></div>
+    <div class="vote">
+      <img src="/vendor/open-iconic/svg/heart.svg" class="svg" alt="Favorite" />
+      <img src="/vendor/open-iconic/svg/thumb-up.svg" class="svg" alt="Acceptable" />
+      <img src="/vendor/open-iconic/svg/thumb-down.svg" class="svg" alt="Unacceptable" />
+    </div>
+  </div>
   <div class="pronunciation">{{.Pronunciation}}</div>
   <div class="ipa">{{.IPA}}</div>
   <div class="description">{{.Description}}</div>
