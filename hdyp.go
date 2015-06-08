@@ -1,13 +1,16 @@
 package main
 
 import (
+	"fmt"
 	"html/template"
+	"log"
 	"net/http"
 	"os"
 	"strings"
 
 	"google.golang.org/appengine"
 	"google.golang.org/appengine/datastore"
+	"google.golang.org/appengine/user"
 )
 
 var t *template.Template
@@ -16,21 +19,49 @@ var staticService = http.FileServer(http.Dir("www"))
 func init() {
 	t = template.Must(template.ParseGlob("template/*.html"))
 	http.HandleFunc("/", handle)
+	http.HandleFunc("/login", handleLogin)
+	http.HandleFunc("/logout", handleLogout)
+	http.HandleFunc("/_ah/start", serverStart)
 }
 
 func main() {
 	appengine.Main()
 }
 
+func serverStart(w http.ResponseWriter, r *http.Request) {
+	c := appengine.NewContext(r)
+	if appengine.IsDevAppServer() {
+		if !GetSettingBool(c, "alreadyInit") {
+			if err := loadSomeData(c); err != nil {
+				log.Printf(err.Error())
+			} else {
+				SetSettingBool(c, "alreadyInit", true)
+				fmt.Fprint(w, "OK")
+				return
+			}
+		}
+	}
+	fmt.Fprint(w, "OK")
+	return
+}
+
 func notFound(w http.ResponseWriter, r *http.Request) {
-	t.ExecuteTemplate(w, "404.html", nil)
+	c := appengine.NewContext(r)
+	u := user.Current(c)
+
+	t.ExecuteTemplate(w, "404.html", map[string]interface{}{
+		"user": u,
+	})
 }
 
 func handle(w http.ResponseWriter, r *http.Request) {
 	c := appengine.NewContext(r)
+	u := user.Current(c)
 
 	if r.URL.Path == "/" {
-		t.ExecuteTemplate(w, "index.html", nil)
+		t.ExecuteTemplate(w, "index.html", map[string]interface{}{
+			"user": u,
+		})
 		return
 	}
 
@@ -58,64 +89,11 @@ func handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	// word := &Word{
-	// 	Word: "GIF",
-	// 	Pronunciations: []Pronunciation{
-	// 		Pronunciation{
-	// 			Rating:        65,
-	// 			Pronunciation: "jiff",
-	// 			IPA:           "/ˈdʒɪf/",
-	// 			Description:   "Choosy developers choose GIF.  Like the peanut butter.",
-	// 			Sources: []PronunciationSource{
-	// 				PronunciationSource{
-	// 					Description: "The original creator of the GIF format, Steve Wilhite at Compuserve, documented this pronunciation.  In 2013 at the Webby Award ceremony, he publicly rejected the alternative pronunciation.",
-	// 				},
-	// 				PronunciationSource{
-	// 					URL:         mustParseURL("http://en.wikipedia.org/wiki/GIF#Pronunciation"),
-	// 					Description: "Wikipedia",
-	// 				},
-	// 				PronunciationSource{
-	// 					URL: mustParseURL("http://www.cnn.com/2013/05/22/tech/web/pronounce-gif/"),
-	// 				},
-	// 				PronunciationSource{
-	// 					URL: mustParseURL("http://twitpic.com/csdcxf"),
-	// 				},
-	// 				PronunciationSource{
-	// 					URL: mustParseURL("https://twitter.com/Jif/status/337277962837704705"),
-	// 				},
-	// 				PronunciationSource{
-	// 					URL: mustParseURL("http://www.olsenhome.com/gif/"),
-	// 				},
-	// 				PronunciationSource{
-	// 					URL: mustParseURL("https://www.yahoo.com/tech/did-you-just-say-mem-to-ensure-that-you-dont-85736013339.html"),
-	// 				},
-	// 			},
-	// 		},
-	// 		Pronunciation{
-	// 			Rating:        35,
-	// 			Pronunciation: "g'if",
-	// 			IPA:           "/ˈɡɪf/",
-	// 			Description:   "Like gift without the T.",
-	// 			Sources: []PronunciationSource{
-	// 				PronunciationSource{
-	// 					Description: "Many people believe that because other short G- words use the hard-G sound, this should too.  The English language is strongly based on the argumentum ad populum; because a large number of people prefer this pronunciation, it has been accepted by most dictionaries.",
-	// 				},
-	// 				PronunciationSource{
-	// 					URL: mustParseURL("http://howtoreallypronouncegif.com/"),
-	// 				},
-	// 			},
-	// 		},
-	// 	},
-	// }
-	// if err := SetWord(c, word); err != nil {
-	// 	fmt.Fprint(w, err)
-	// 	return
-	// }
-
 	word, err := GetWord(c, reqWord)
 	if err != nil {
 		if err == datastore.ErrNoSuchEntity {
 			t.ExecuteTemplate(w, "new.html", map[string]interface{}{
+				"user": u,
 				"word": Word{
 					Word: reqWord,
 				},
@@ -128,11 +106,58 @@ func handle(w http.ResponseWriter, r *http.Request) {
 
 	if word != nil {
 		t.ExecuteTemplate(w, "word.html", map[string]interface{}{
-			"noautofocus": true,
+			"user":        u,
 			"word":        word,
+			"noautofocus": true,
 		})
 		return
 	}
 
 	notFound(w, r)
+}
+
+func handleLogin(w http.ResponseWriter, r *http.Request) {
+	redir := r.URL.Query().Get("r")
+	if redir == "" {
+		redir = r.Referer()
+		if redir == "" {
+			redir = "/"
+		}
+	}
+	c := appengine.NewContext(r)
+	u := user.Current(c)
+	if u == nil {
+		loginURL, err := user.LoginURL(c, redir)
+		if err != nil {
+			// something bad happened?  FIXME: handle this error some other way
+			fmt.Fprint(w, err.Error())
+			return
+		}
+		http.Redirect(w, r, loginURL, http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, redir, http.StatusSeeOther)
+}
+
+func handleLogout(w http.ResponseWriter, r *http.Request) {
+	redir := r.URL.Query().Get("r")
+	if redir == "" {
+		redir = r.Referer()
+		if redir == "" {
+			redir = "/"
+		}
+	}
+	c := appengine.NewContext(r)
+	u := user.Current(c)
+	if u != nil {
+		logoutURL, err := user.LogoutURL(c, redir)
+		if err != nil {
+			// something bad happened?  FIXME: handle this error some other way
+			fmt.Fprint(w, err.Error())
+			return
+		}
+		http.Redirect(w, r, logoutURL, http.StatusSeeOther)
+		return
+	}
+	http.Redirect(w, r, redir, http.StatusSeeOther)
 }
